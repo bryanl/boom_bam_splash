@@ -2,7 +2,7 @@ source 'http://rubygems.org'
 
 gem 'rails', '3.0.0'
 gem 'mysql2'
-gem 'unicorn'
+gem 'thin'
 gem 'haml'
 gem 'redis'
 gem 'redis-namespace'

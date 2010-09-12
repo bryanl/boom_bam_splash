@@ -10,12 +10,13 @@ module HasherCrasher
       extend ActiveModel::Naming
       extend ActiveModel::Callbacks
 
-      define_model_callbacks :create, :update, :destroy
+      define_model_callbacks :create, :update, :destroy, :save
 
       define_attribute_methods [:name, :data]
 
       attr_reader :errors
       attr_accessor :name, :data
+      attr_writer :persisted
     end
 
     module ClassMethods
@@ -27,9 +28,37 @@ module HasherCrasher
         $redis
       end
 
+      def create(options)
+        ohm = new(options)
+        ohm.tap do |o|
+          ohm.save
+        end
+      end
+
       def find(name)
         data = redis.get(key_for(name))
-        data ? new(:data => data, :name => name) : nil
+        if data 
+          new(:data => data, :name => name).tap do |o|
+            o.persisted = true
+          end
+        else
+          nil
+        end
+      end
+
+      def all
+        keys = $redis.keys([namespace, "*"].join(':'))
+        keys.map do |key|
+          data = redis.get(key)
+          name = key.gsub(/#{namespace}:/, '')
+          if data 
+            new(:data => data, :name => name).tap do |o|
+              o.persisted = true
+            end
+          else
+            nil
+          end
+        end.reject{|o| o.nil?}
       end
 
       def key_for(key)
@@ -41,6 +70,10 @@ module HasherCrasher
       def initialize(options={})
         @errors = ActiveModel::Errors.new(self)
 
+        if file = options.delete(:data_file)
+          self.send(:data_file=, file)
+        end
+
         options.each_pair do |k,v|
           if respond_to? k
             instance_variable_set :"@#{k}", v
@@ -48,12 +81,23 @@ module HasherCrasher
         end
       end
 
+      def id
+        persisted? ? name : nil
+      end
+
+      def data_file=(file)
+        self.data = file.read
+      end
+
+      def data_file
+      end
+
       def to_model
         self
       end
 
       def persisted?
-        false
+        @persisted || false
       end
 
       def save
@@ -61,20 +105,23 @@ module HasherCrasher
         _redis.get(name) ? update : create
       end
 
-      private
 
       def create
         _run_create_callbacks do
           _redis.set(_key_for(name), data)
+          @persisted = true
         end
       end
 
       def update
         _run_update_callbacks do
           _redis.set(name, data)
+          @persisted = true
         end
 
       end
+
+      private
 
       def _redis
         self.class.redis

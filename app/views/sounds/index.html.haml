@@ -1,0 +1,8 @@
+#sounds
+  - @sounds.each do |sound|
+    .sound
+      %p= sound.name
+      %audio{:src => sound_path(sound), :controls => "true"}
+  %div{:style => "clear:both;"}
+
+= link_to "Add a new sound", new_sound_path

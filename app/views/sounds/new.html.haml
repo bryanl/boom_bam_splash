@@ -1,0 +1,9 @@
+= form_for @sound, :html => {:multipart => true} do |f|
+  %p
+    = f.label :name
+    = f.text_field :name
+  %p
+    = f.label :data_file
+    = f.file_field :data_file
+  %p
+    = f.submit

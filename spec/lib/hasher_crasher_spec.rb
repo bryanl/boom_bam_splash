@@ -39,10 +39,26 @@ describe HasherCrasher::Dummy do
       subject.redis.should == redis
     end
 
+    describe "creating" do
+      it "should create a new instance" do
+        redis.should_receive(:get)
+        redis.should_receive(:set).with("hasher_crasher_dummy:key", "data")
+        subject.create :name => "key", :data => "data"
+      end
+    end
+
     describe "finding" do
       it "should find an instance by name" do
         redis.should_receive(:get).with("hasher_crasher_dummy:key").and_return("data")
         subject.find("key")    
+      end
+
+      it "should find all" do
+        base = "hasher_crasher_dummy"
+        expected_keys = %w[key1 key2].map{|k| "#{base}:#{k}"}
+        redis.should_receive(:keys).with("#{base}:*").and_return(expected_keys)
+        redis.should_receive(:get).twice
+        subject.all
       end
 
       context "and it exists" do
@@ -71,6 +87,15 @@ describe HasherCrasher::Dummy do
   describe "instance" do
     let(:dummy) { HasherCrasher::Dummy.new }
 
+    specify "it's name equals its id once persisted" do
+      redis.should_receive(:get).with("key").and_return(true)
+      redis.should_receive(:set).with("key", "data")
+      dummy.name = "key"
+      dummy.data = "data"
+      dummy.save
+
+      dummy.id.should == "key"
+    end
 
     describe "saving" do
       context "and it is new" do

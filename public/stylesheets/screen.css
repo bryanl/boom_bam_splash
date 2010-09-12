@@ -24,7 +24,10 @@ a {
   background-color: #FFF;
   padding: 20px 40px;
   border: solid 1px black;
-  margin-top: 20px;
+  margin-top: 150px;
+  margin-bottom: 150px;
+  -webkit-box-shadow: 10px 10px 5px #333;
+  -webkit-border-radius: 10px;
 }
 
 #flash_notice, #flash_error {
@@ -80,3 +83,15 @@ a {
   list-style: disc;
 }
 
+#sound {
+}
+
+.sound {
+  width: 320px;
+  height: 100px;
+  margin-right: 0 50px 45px;
+  padding: 20px;
+
+  float: left;
+
+}
